@@ -14,11 +14,10 @@ ADMIN_API_KEY = "Wen0PWx!loa"
 # Token de tu bot
 TOKEN = "8998224860:AAHCxlM3GKXvrG7rgw_ZIpyfTR-44Of-9gk"
 
-# 🛑 TU ID DE TELEGRAM (Pon aquí tu ID numérico para que seas el administrador principal)
-ADMIN_IDS = [123456789]  # <-- Reemplaza por tu ID real
+# Tu ID de Telegram configurado como administrador principal
+ADMIN_IDS = [8046948909]
 
 # Lista donde se guardarán los usernames autorizados dinámicamente
-# (Puedes agregar usuarios iniciales sin la arroba, ej: "tu_usuario")
 USUARIOS_AUTORIZADOS = [] 
 
 def restricted(func):
