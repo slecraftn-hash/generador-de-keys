@@ -3,6 +3,7 @@ import urllib.parse
 import urllib.request
 import urllib.error
 import secrets
+from datetime import datetime, timedelta
 from functools import wraps
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
@@ -17,21 +18,34 @@ TOKEN = "8998224860:AAHCxlM3GKXvrG7rgw_ZIpyfTR-44Of-9gk"
 # Tu ID de Telegram verificado
 ADMIN_IDS = [8046948909]
 
-# Lista donde se guardarán los usernames autorizados dinámicamente
-USUARIOS_AUTORIZADOS = [] 
+# Diccionario donde guardaremos a los usuarios autorizados con su fecha de expiración: {"username": fecha_limite}
+USUARIOS_AUTORIZADOS = {} 
 
 def restricted(func):
-    """Decorador para permitir el acceso solo al admin principal o usuarios autorizados"""
+    """Decorador para permitir el acceso solo al admin principal o usuarios con membresía vigente"""
     @wraps(func)
     async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = update.effective_user.id
         username = update.effective_user.username
         
-        # Permitir si es el admin principal o si su username está en la lista autorizada
-        if user_id not in ADMIN_IDS and (not username or username.lower() not in [u.lower() for u in USUARIOS_AUTORIZADOS]):
-            await update.message.reply_text("⛔ **Acceso denegado.** No tienes autorización para usar este bot.")
-            return
-        return await func(update, context)
+        # El admin principal siempre tiene acceso
+        if user_id in ADMIN_IDS:
+            return await func(update, context)
+            
+        # Verificar si el usuario tiene un username válido y está en la lista
+        if username:
+            clean_username = username.lower()
+            if clean_username in USUARIOS_AUTORIZADOS:
+                # Comprobar si la membresía sigue vigente
+                fecha_expiracion = USUARIOS_AUTORIZADOS[clean_username]
+                if datetime.now() < fecha_expiracion:
+                    return await func(update, context)
+                else:
+                    # Si ya expiró, lo eliminamos automáticamente
+                    del USUARIOS_AUTORIZADOS[clean_username]
+        
+        await update.message.reply_text("⛔ **Acceso denegado o membresía expirada.** No tienes autorización vigente para usar este bot.")
+        return
     return wrapper
 
 def llamar_api(endpoint, params):
@@ -65,8 +79,8 @@ async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "  _Revisa el estado de una key_\n\n"
         "• `/eliminar` [key]\n"
         "  _Borra una key_\n\n"
-        "• `/agregar` [username]\n"
-        "  _Da acceso a un nuevo usuario por su nombre (Ej: /agregar juanito)_\n\n"
+        "• `/agregar` [username] [días]\n"
+        "  _Da acceso temporal a un usuario (Ej: /agregar juanito 7)_\n\n"
         "• `/menu`\n"
         "  _Muestra este menú_"
     )
@@ -74,18 +88,29 @@ async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 @restricted
 async def agregar_usuario(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Comando exclusivo para agregar usuarios por su username"""
+    """Comando exclusivo para agregar usuarios con límite de tiempo"""
     args = context.args
-    if not args:
-        await update.message.reply_text("⚠️ Escribe el username. Ejemplo: `/agregar nombreusuario`", parse_mode="Markdown")
+    if len(args) < 2:
+        await update.message.reply_text("⚠️ Uso correcto: `/agregar` [username] [días]\nEjemplo: `/agregar juanito 7`", parse_mode="Markdown")
         return
     
-    nuevo_user = args[0].replace("@", "").strip()
-    if nuevo_user.lower() not in [u.lower() for u in USUARIOS_AUTORIZADOS]:
-        USUARIOS_AUTORIZADOS.append(nuevo_user)
-        await update.message.reply_text(f"✅ ¡Usuario **@{nuevo_user}** agregado exitosamente a los autorizados!", parse_mode="Markdown")
-    else:
-        await update.message.reply_text(f"ℹ️ El usuario **@{nuevo_user}** ya estaba en la lista.", parse_mode="Markdown")
+    nuevo_user = args[0].replace("@", "").strip().lower()
+    try:
+        dias = int(args[1])
+    except ValueError:
+        await update.message.reply_text("⚠️ Los días deben ser un número entero. Ejemplo: `/agregar juanito 7`", parse_mode="Markdown")
+        return
+    
+    # Calcular la fecha de expiración sumando los días actuales
+    fecha_expiracion = datetime.now() + timedelta(days=dias)
+    USUARIOS_AUTORIZADOS[nuevo_user] = fecha_expiracion
+    
+    fecha_formateada = fecha_expiracion.strftime('%d/%m/%Y %H:%M')
+    await update.message.reply_text(
+        f"✅ ¡Usuario **@{nuevo_user}** autorizado por **{dias} días**!\n"
+        f"⏳ Válido hasta: `{fecha_formateada}`", 
+        parse_mode="Markdown"
+    )
 
 @restricted
 async def generar(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -185,6 +210,5 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("comprobar", comprobar))
     app.add_handler(CommandHandler("eliminar", eliminar))
     
-    print("🤖 ¡Bot de Telegram iniciado y operativo en t.me/casawa_bot!")
+    print("🤖 ¡Bot de Telegram iniciado con control de tiempo para usuarios!")
     app.run_polling()
-
