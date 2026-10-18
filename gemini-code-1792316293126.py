@@ -3,29 +3,9 @@ import urllib.parse
 import urllib.request
 import urllib.error
 import secrets
-import os
-import threading
-from http.server import HTTPServer, BaseHTTPRequestHandler
 from functools import wraps
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
-
-# Servidor web falso para que Render detecte el puerto y no dé error de timeout
-def run_dummy_server():
-    port = int(os.environ.get("PORT", 10000))
-    class SimpleHandler(BaseHTTPRequestHandler):
-        def do_GET(self):
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(b"Bot is alive and running!")
-        def log_message(self, format, *args):
-            return # Silenciar logs HTTP para mantener limpia la consola
-    
-    server = HTTPServer(('0.0.0.0', port), SimpleHandler)
-    server.serve_forever()
-
-# Iniciar el servidor web en segundo plano
-threading.Thread(target=run_dummy_server, daemon=True).start()
 
 # Tus datos de la API
 API_BASE = "http://155.117.40.185:10068"
@@ -34,7 +14,7 @@ ADMIN_API_KEY = "Wen0PWx!loa"
 # Token de tu bot
 TOKEN = "8998224860:AAHCxlM3GKXvrG7rgw_ZIpyfTR-44Of-9gk"
 
-# Tu ID de Telegram configurado como administrador principal
+# Tu ID de Telegram verificado
 ADMIN_IDS = [8046948909]
 
 # Lista donde se guardarán los usernames autorizados dinámicamente
@@ -207,3 +187,4 @@ if __name__ == "__main__":
     
     print("🤖 ¡Bot de Telegram iniciado y operativo en t.me/casawa_bot!")
     app.run_polling()
+
