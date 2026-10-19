@@ -183,7 +183,19 @@ async def lote(update: Update, context: ContextTypes.DEFAULT_TYPE):
     exito, res = llamar_api("batch/generate", {"name": name, "count": count, "days": days})
     
     if exito:
-        mensaje = f"📦 **¡Lote Generado Exitosamente!**\n🏷️ **Nombre:** `{name}`\n🔢 **Cantidad:** {count}\n⏳ **Duración:** {days} días"
+        keys_texto = ""
+        if isinstance(res, dict):
+            keys_list = res.get("keys") or res.get("data") or res.get("result")
+            if isinstance(keys_list, list):
+                keys_texto = "\n".join([f"• `{k}`" for k in keys_list])
+            else:
+                keys_texto = f"```json\n{json.dumps(res, indent=2)}\n```"
+        elif isinstance(res, list):
+            keys_texto = "\n".join([f"• `{k}`" for k in res])
+        else:
+            keys_texto = str(res)
+
+        mensaje = f"📦 **¡Lote Generado Exitosamente!**\n🏷️ **Nombre:** `{name}`\n🔢 **Cantidad:** {count}\n⏳ **Duración:** {days} días\n\n🔑 **Keys:**\n{keys_texto}"
     else:
         mensaje = f"❌ **Error al generar el lote:**\n`{res}`"
         
@@ -245,5 +257,5 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("comprobar", comprobar))
     app.add_handler(CommandHandler("eliminar", eliminar))
     
-    print("🤖 ¡Bot limpio y funcionando al 100%!")
+    print("🤖 ¡Bot listo y mostrando las keys de los lotes correctamente!")
     app.run_polling()
