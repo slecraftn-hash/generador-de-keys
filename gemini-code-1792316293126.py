@@ -155,7 +155,7 @@ async def generar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     exito, res = llamar_api("generate", {"key": key_aleatoria, "days": days})
     
     if exito:
-        mensaje = f"✅ **¡Key Generada!**\n\n🔑 `{key_aleatoria}`\n⏳ **Duración:** {days} días\nRespuesta: `{res}`"
+        mensaje = f"✅ **¡Key Generada!**\n\n🔑 `{key_aleatoria}`\n⏳ **Duración:** {days} días"
     else:
         mensaje = f"❌ **Error:**\n`{res}`"
         
@@ -183,7 +183,7 @@ async def lote(update: Update, context: ContextTypes.DEFAULT_TYPE):
     exito, res = llamar_api("batch/generate", {"name": name, "count": count, "days": days})
     
     if exito:
-        mensaje = f"📦 **¡Lote Generado Exitosamente!**\n🏷️ **Nombre:** `{name}`\n🔢 **Cantidad:** {count}\n⏳ **Duración:** {days} días\n\nRespuesta: `{res}`"
+        mensaje = f"📦 **¡Lote Generado Exitosamente!**\n🏷️ **Nombre:** `{name}`\n🔢 **Cantidad:** {count}\n⏳ **Duración:** {days} días"
     else:
         mensaje = f"❌ **Error al generar el lote:**\n`{res}`"
         
@@ -217,7 +217,7 @@ async def eliminar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     exito, res = llamar_api("delete", {"key": key})
     
     if exito:
-        mensaje = f"🗑️ **Key eliminada o procesada:**\n`{key}`\nRespuesta: `{res}`"
+        mensaje = f"🗑️ **Key eliminada o procesada:**\n`{key}`"
     else:
         mensaje = f"❌ **Error:**\n`{res}`"
         
@@ -245,5 +245,5 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("comprobar", comprobar))
     app.add_handler(CommandHandler("eliminar", eliminar))
     
-    print("🤖 ¡Bot listo y usando librerías nativas sin errores de dependencias!")
+    print("🤖 ¡Bot limpio y funcionando al 100%!")
     app.run_polling()
