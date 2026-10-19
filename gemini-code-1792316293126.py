@@ -1,8 +1,10 @@
 import json
+import urllib.parse
+import urllib.request
+import urllib.error
 import secrets
 from datetime import datetime, timedelta
 from functools import wraps
-import requests
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
@@ -59,20 +61,23 @@ def admin_only(func):
     return wrapper
 
 def llamar_api(endpoint, params=None):
-    """Hace la petición a la API con la estructura exacta solicitada"""
+    """Hace la petición a la API utilizando urllib nativo sin dependencias externas"""
     url = f"{API_BASE}/{ADMIN_API_KEY}/{endpoint}"
+    if params:
+        query = urllib.parse.urlencode(params)
+        url += f"?{query}"
     
     try:
-        response = requests.get(url, params=params, headers={"User-Agent": "TelegramBot/1.0"}, timeout=15)
-        try:
-            data = response.json()
-        except Exception:
-            data = response.text
-            
-        if response.status_code == 200:
-            return True, data
-        else:
-            return False, f"Error HTTP {response.status_code}: {data}"
+        req = urllib.request.Request(url, headers={"User-Agent": "TelegramBot/1.0"})
+        with urllib.request.urlopen(req, timeout=15) as response:
+            body = response.read().decode('utf-8')
+            try:
+                return True, json.loads(body)
+            except Exception:
+                return True, body
+    except urllib.error.HTTPError as e:
+        body = e.read().decode('utf-8', errors='replace')
+        return False, f"Error HTTP {e.code}: {body}"
     except Exception as e:
         return False, f"Error de conexión: {e}"
 
@@ -147,7 +152,6 @@ async def generar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     days = args[0] if args else "10"
     
     key_aleatoria = f"csw_{secrets.token_hex(4).upper()}"
-    # Ruta: /generate?key=...&days=...
     exito, res = llamar_api("generate", {"key": key_aleatoria, "days": days})
     
     if exito:
@@ -176,7 +180,6 @@ async def lote(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("⚠️ Máximo 30 keys por lote.", parse_mode="Markdown")
         return
 
-    # Ruta: /batch/generate?name=...&count=...&days=...
     exito, res = llamar_api("batch/generate", {"name": name, "count": count, "days": days})
     
     if exito:
@@ -194,7 +197,6 @@ async def comprobar(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     key = args[0]
-    # Ruta: /check?key=...
     exito, res = llamar_api("check", {"key": key})
     
     if exito:
@@ -212,7 +214,6 @@ async def eliminar(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     key = args[0]
-    # Ruta: /delete?key=...
     exito, res = llamar_api("delete", {"key": key})
     
     if exito:
@@ -244,5 +245,5 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("comprobar", comprobar))
     app.add_handler(CommandHandler("eliminar", eliminar))
     
-    print("🤖 ¡Bot configurado con la API correcta y listo!")
+    print("🤖 ¡Bot listo y usando librerías nativas sin errores de dependencias!")
     app.run_polling()
