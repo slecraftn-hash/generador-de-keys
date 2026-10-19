@@ -61,7 +61,7 @@ def admin_only(func):
     return wrapper
 
 def llamar_api(endpoint, params=None):
-    """Hace la petición a la API evitando codificar de más la clave"""
+    """Hace la petición a la API asegurando que la clave viaje limpia"""
     url = f"{API_BASE}/{ADMIN_API_KEY}/{endpoint}"
     
     if params:
@@ -243,5 +243,5 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("comprobar", comprobar))
     app.add_handler(CommandHandler("eliminar", eliminar))
     
-    print("🤖 ¡Bot actualizado y listo con la nueva API!")
+    print("🤖 ¡Bot optimizado, conectado a la API y con controles seguros listos!")
     app.run_polling()
