@@ -61,8 +61,8 @@ def admin_only(func):
     return wrapper
 
 def llamar_api(endpoint, params=None):
-    """Hace la petición a la nueva API y devuelve un diccionario con la respuesta JSON"""
-    url = f"{API_BASE}/{urllib.parse.quote(ADMIN_API_KEY, safe='')}/{endpoint}"
+    """Hace la petición a la API evitando codificar de más la clave"""
+    url = f"{API_BASE}/{ADMIN_API_KEY}/{endpoint}"
     
     if params:
         query = urllib.parse.urlencode(params)
@@ -150,7 +150,6 @@ async def generar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     days = args[0] if args else "10"
     
     key_aleatoria = f"csw_{secrets.token_hex(4).upper()}"
-    # Usando el endpoint /generate?key=NEW_KEY&days=10
     exito, res = llamar_api("generate", {"key": key_aleatoria, "days": days})
     
     if exito:
@@ -179,7 +178,6 @@ async def lote(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("⚠️ Máximo 30 keys por lote.", parse_mode="Markdown")
         return
 
-    # Usando el endpoint /batch/generate?name=file1&count=5&days=10
     exito, res = llamar_api("batch/generate", {"name": name, "count": count, "days": days})
     
     if exito:
@@ -197,7 +195,6 @@ async def comprobar(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     key = args[0]
-    # Usando el endpoint /check?key=TEST_KEY
     exito, res = llamar_api("check", {"key": key})
     
     if exito:
@@ -215,7 +212,6 @@ async def eliminar(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     key = args[0]
-    # Usando el endpoint /delete?key=USER_KEY
     exito, res = llamar_api("delete", {"key": key})
     
     if exito:
@@ -247,5 +243,5 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("comprobar", comprobar))
     app.add_handler(CommandHandler("eliminar", eliminar))
     
-    print("🤖 ¡Bot conectado exitosamente con la nueva API y rutas configuradas!")
+    print("🤖 ¡Bot actualizado y listo con la nueva API!")
     app.run_polling()
