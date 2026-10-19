@@ -10,7 +10,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 # Tus datos de la API
 API_BASE = "http://155.117.40.185:10068"
-ADMIN_API_KEY = "Wen0PWx!loa"
+ADMIN_API_KEY = "Paloq!gg"
 
 # Token de tu bot
 TOKEN = "8998224860:AAHCxlM3GKXvrG7rgw_ZIpyfTR-44Of-9gk"
