@@ -80,9 +80,7 @@ def llamar_api(endpoint, params):
 
 @restricted
 async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    
-    # Menú básico para usuarios autorizados
+    """Menú público para usuarios autorizados"""
     texto_menu = (
         "🤖 **MENÚ DE GESTIÓN DE KEYS** 🤖\n\n"
         "Comandos disponibles:\n\n"
@@ -97,18 +95,22 @@ async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "• `/menu`\n"
         "  _Muestra este menú_"
     )
-    
-    # Si eres el administrador, agregamos los comandos exclusivos al menú que visualizas
-    if user_id in ADMIN_IDS:
-        texto_menu += (
-            "\n\n👑 **COMANDOS DE ADMINISTRADOR:**\n"
-            "• `/agregar` [username] [días]\n"
-            "  _Da acceso temporal a un usuario_\n"
-            "• `/borrar_todos`\n"
-            "  _Elimina todos los usuarios autorizados de la lista_"
-        )
-
     await update.message.reply_text(texto_menu, parse_mode="Markdown")
+
+@admin_only
+async def menu_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Menú exclusivo y privado para el administrador"""
+    texto_admin = (
+        "👑 **MENÚ DE ADMINISTRACIÓN EXCLUSIVO** 👑\n\n"
+        "Comandos de control:\n\n"
+        "• `/agregar` [username] [días]\n"
+        "  _Da acceso temporal a un usuario (Ej: /agregar juanito 7)_\n\n"
+        "• `/borrar_todos`\n"
+        "  _Elimina todos los usuarios autorizados de la lista_\n\n"
+        "• `/menuadmin`\n"
+        "  _Muestra este panel de administración_"
+    )
+    await update.message.reply_text(texto_admin, parse_mode="Markdown")
 
 @admin_only
 async def agregar_usuario(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -229,10 +231,14 @@ async def eliminar(update: Update, context: ContextTypes.DEFAULT_TYPE):
 if __name__ == "__main__":
     app = ApplicationBuilder().token(TOKEN).build()
     
+    # Menús generales
     app.add_handler(CommandHandler("start", menu))
     app.add_handler(CommandHandler("menu", menu))
     app.add_handler(CommandHandler("ayuda", menu))
     app.add_handler(CommandHandler("help", menu))
+    
+    # Menú exclusivo de administrador
+    app.add_handler(CommandHandler("menuadmin", menu_admin))
     
     # Comandos exclusivos del Administrador
     app.add_handler(CommandHandler("agregar", agregar_usuario))
@@ -244,5 +250,5 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("comprobar", comprobar))
     app.add_handler(CommandHandler("eliminar", eliminar))
     
-    print("🤖 ¡Bot de Telegram actualizado con seguridad estricta para el Administrador!")
+    print("🤖 ¡Bot actualizado con menú de administración separado!")
     app.run_polling()
