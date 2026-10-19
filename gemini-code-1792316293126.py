@@ -15,7 +15,7 @@ ADMIN_API_KEY = "Wen0PWx!loa"
 # Token de tu bot
 TOKEN = "8998224860:AAHCxlM3GKXvrG7rgw_ZIpyfTR-44Of-9gk"
 
-# Tu ID de Telegram verificado
+# Tu ID de Telegram verificado (Exclusivo para Admin)
 ADMIN_IDS = [8046948909]
 
 # Diccionario donde guardaremos a los usuarios autorizados con su fecha de expiración: {"username": fecha_limite}
@@ -48,6 +48,18 @@ def restricted(func):
         return
     return wrapper
 
+def admin_only(func):
+    """Decorador exclusivo para que SOLO el administrador principal pueda usar el comando"""
+    @wraps(func)
+    async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        user_id = update.effective_user.id
+        if user_id in ADMIN_IDS:
+            return await func(update, context)
+        
+        await update.message.reply_text("⛔ **Comando restringido.** Solo el administrador puede usar esta función.")
+        return
+    return wrapper
+
 def llamar_api(endpoint, params):
     """Hace la petición a la API y devuelve un diccionario con la respuesta JSON"""
     query = urllib.parse.urlencode(params)
@@ -68,6 +80,9 @@ def llamar_api(endpoint, params):
 
 @restricted
 async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    
+    # Menú básico para usuarios autorizados
     texto_menu = (
         "🤖 **MENÚ DE GESTIÓN DE KEYS** 🤖\n\n"
         "Comandos disponibles:\n\n"
@@ -79,16 +94,25 @@ async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "  _Revisa el estado de una key_\n\n"
         "• `/eliminar` [key]\n"
         "  _Borra una key_\n\n"
-        "• `/agregar` [username] [días]\n"
-        "  _Da acceso temporal a un usuario (Ej: /agregar juanito 7)_\n\n"
         "• `/menu`\n"
         "  _Muestra este menú_"
     )
+    
+    # Si eres el administrador, agregamos los comandos exclusivos al menú que visualizas
+    if user_id in ADMIN_IDS:
+        texto_menu += (
+            "\n\n👑 **COMANDOS DE ADMINISTRADOR:**\n"
+            "• `/agregar` [username] [días]\n"
+            "  _Da acceso temporal a un usuario_\n"
+            "• `/borrar_todos`\n"
+            "  _Elimina todos los usuarios autorizados de la lista_"
+        )
+
     await update.message.reply_text(texto_menu, parse_mode="Markdown")
 
-@restricted
+@admin_only
 async def agregar_usuario(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Comando exclusivo para agregar usuarios con límite de tiempo"""
+    """Comando exclusivo del administrador para agregar usuarios con límite de tiempo"""
     args = context.args
     if len(args) < 2:
         await update.message.reply_text("⚠️ Uso correcto: `/agregar` [username] [días]\nEjemplo: `/agregar juanito 7`", parse_mode="Markdown")
@@ -111,6 +135,12 @@ async def agregar_usuario(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"⏳ Válido hasta: `{fecha_formateada}`", 
         parse_mode="Markdown"
     )
+
+@admin_only
+async def borrar_todos_usuarios(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Comando exclusivo del administrador para vaciar la lista de usuarios autorizados"""
+    USUARIOS_AUTORIZADOS.clear()
+    await update.message.reply_text("🗑️ **¡Lista vaciada!** Se han eliminado todos los usuarios autorizados del sistema.", parse_mode="Markdown")
 
 @restricted
 async def generar(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -204,11 +234,15 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("ayuda", menu))
     app.add_handler(CommandHandler("help", menu))
     
+    # Comandos exclusivos del Administrador
     app.add_handler(CommandHandler("agregar", agregar_usuario))
+    app.add_handler(CommandHandler("borrar_todos", borrar_todos_usuarios))
+    
+    # Comandos generales para ti y tus usuarios con membresía vigente
     app.add_handler(CommandHandler("generar", generar))
     app.add_handler(CommandHandler("lote", lote))
     app.add_handler(CommandHandler("comprobar", comprobar))
     app.add_handler(CommandHandler("eliminar", eliminar))
     
-    print("🤖 ¡Bot de Telegram iniciado con control de tiempo para usuarios!")
+    print("🤖 ¡Bot de Telegram actualizado con seguridad estricta para el Administrador!")
     app.run_polling()
