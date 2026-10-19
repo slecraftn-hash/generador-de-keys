@@ -61,8 +61,8 @@ def admin_only(func):
     return wrapper
 
 def llamar_api(endpoint, params=None):
-    """Hace la petición a la nueva API y devuelve un diccionario con la respuesta JSON"""
-    url = f"{API_BASE}/{urllib.parse.quote(ADMIN_API_KEY, safe='')}/{endpoint}"
+    """Hace la petición a la API evitando codificar de más la clave"""
+    url = f"{API_BASE}/{ADMIN_API_KEY}/{endpoint}"
     
     if params:
         query = urllib.parse.urlencode(params)
@@ -142,110 +142,4 @@ async def agregar_usuario(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def borrar_todos_usuarios(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Comando exclusivo del administrador para vaciar la lista de usuarios autorizados"""
     USUARIOS_AUTORIZADOS.clear()
-    await update.message.reply_text("🗑️ **¡Lista vaciada!** Se han eliminado todos los usuarios autorizados del sistema.", parse_mode="Markdown")
-
-@restricted
-async def generar(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    args = context.args
-    days = args[0] if args else "10"
-    
-    key_aleatoria = f"csw_{secrets.token_hex(4).upper()}"
-    # Usando el endpoint /generate?key=NEW_KEY&days=10
-    exito, res = llamar_api("generate", {"key": key_aleatoria, "days": days})
-    
-    if exito:
-        mensaje = f"✅ **¡Key Generada!**\n\n🔑 `{key_aleatoria}`\n⏳ **Duración:** {days} días"
-    else:
-        mensaje = f"❌ **Error:**\n`{res}`"
-        
-    await update.message.reply_text(mensaje, parse_mode="Markdown")
-
-@restricted
-async def lote(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    args = context.args
-    if len(args) < 3:
-        await update.message.reply_text("⚠️ Usa: `/lote` [nombre] [cantidad] [días]", parse_mode="Markdown")
-        return
-    
-    name = args[0]
-    try:
-        count = int(args[1])
-        days = args[2]
-    except ValueError:
-        await update.message.reply_text("⚠️ La cantidad debe ser un número entero.", parse_mode="Markdown")
-        return
-
-    if count > 30:
-        await update.message.reply_text("⚠️ Máximo 30 keys por lote.", parse_mode="Markdown")
-        return
-
-    # Usando el endpoint /batch/generate?name=file1&count=5&days=10
-    exito, res = llamar_api("batch/generate", {"name": name, "count": count, "days": days})
-    
-    if exito:
-        mensaje = f"📦 **¡Lote Generado Exitosamente!**\n🏷️ **Nombre:** `{name}`\n🔢 **Cantidad:** {count}\n⏳ **Duración:** {days} días\n\nRespuesta de API: `{res}`"
-    else:
-        mensaje = f"❌ **Error al generar el lote:**\n`{res}`"
-        
-    await update.message.reply_text(mensaje, parse_mode="Markdown")
-
-@restricted
-async def comprobar(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    args = context.args
-    if not args:
-        await update.message.reply_text("⚠️ Escribe la key a comprobar.", parse_mode="Markdown")
-        return
-    
-    key = args[0]
-    # Usando el endpoint /check?key=TEST_KEY
-    exito, res = llamar_api("check", {"key": key})
-    
-    if exito:
-        mensaje = f"🔍 **Key:** `{key}`\n📌 **Respuesta API:** `{res}`"
-    else:
-        mensaje = f"❌ **Error:**\n`{res}`"
-        
-    await update.message.reply_text(mensaje, parse_mode="Markdown")
-
-@restricted
-async def eliminar(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    args = context.args
-    if not args:
-        await update.message.reply_text("⚠️ Escribe la key que quieres eliminar.", parse_mode="Markdown")
-        return
-    
-    key = args[0]
-    # Usando el endpoint /delete?key=USER_KEY
-    exito, res = llamar_api("delete", {"key": key})
-    
-    if exito:
-        mensaje = f"🗑️ **Key eliminada o procesada:**\n`{key}`\nRespuesta: `{res}`"
-    else:
-        mensaje = f"❌ **Error:**\n`{res}`"
-        
-    await update.message.reply_text(mensaje, parse_mode="Markdown")
-
-if __name__ == "__main__":
-    app = ApplicationBuilder().token(TOKEN).build()
-    
-    # Menús generales
-    app.add_handler(CommandHandler("start", menu))
-    app.add_handler(CommandHandler("menu", menu))
-    app.add_handler(CommandHandler("ayuda", menu))
-    app.add_handler(CommandHandler("help", menu))
-    
-    # Menú exclusivo de administrador
-    app.add_handler(CommandHandler("menuadmin", menu_admin))
-    
-    # Comandos exclusivos del Administrador
-    app.add_handler(CommandHandler("agregar", agregar_usuario))
-    app.add_handler(CommandHandler("borrar_todos", borrar_todos_usuarios))
-    
-    # Comandos generales para ti y tus usuarios con membresía vigente
-    app.add_handler(CommandHandler("generar", generar))
-    app.add_handler(CommandHandler("lote", lote))
-    app.add_handler(CommandHandler("comprobar", comprobar))
-    app.add_handler(CommandHandler("eliminar", eliminar))
-    
-    print("🤖 ¡Bot conectado exitosamente con la nueva API y rutas configuradas!")
-    app.run_polling()
+    await update.message.reply_text
