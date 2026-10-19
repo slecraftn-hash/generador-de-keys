@@ -9,7 +9,7 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 # Tus datos de la API actualizados
-API_BASE = "http://155.117.40.185:10068"
+API_BASE = "http://69.197.142.47:10043"
 ADMIN_API_KEY = "Paloq!gg"
 
 # Token de tu bot
@@ -60,11 +60,12 @@ def admin_only(func):
         return
     return wrapper
 
-def llamar_api(endpoint, params):
-    """Hace la petición a la API y devuelve un diccionario con la respuesta JSON"""
-    query = urllib.parse.urlencode(params)
+def llamar_api(endpoint, params=None):
+    """Hace la petición a la nueva API y devuelve un diccionario con la respuesta JSON"""
     url = f"{API_BASE}/{urllib.parse.quote(ADMIN_API_KEY, safe='')}/{endpoint}"
-    if query:
+    
+    if params:
+        query = urllib.parse.urlencode(params)
         url += f"?{query}"
     
     try:
@@ -87,7 +88,7 @@ async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "• `/generar` [días]\n"
         "  _Genera una key individual (Ej: /generar 30)_\n\n"
         "• `/lote` [nombre] [cantidad] [días]\n"
-        "  _Genera múltiples keys (Ej: /lote casawa 5 30)_\n\n"
+        "  _Genera múltiples keys (Ej: /lote file1 5 30)_\n\n"
         "• `/comprobar` [key]\n"
         "  _Revisa el estado de una key_\n\n"
         "• `/eliminar` [key]\n"
@@ -127,7 +128,6 @@ async def agregar_usuario(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("⚠️ Los días deben ser un número entero. Ejemplo: `/agregar juanito 7`", parse_mode="Markdown")
         return
     
-    # Calcular la fecha de expiración sumando los días actuales
     fecha_expiracion = datetime.now() + timedelta(days=dias)
     USUARIOS_AUTORIZADOS[nuevo_user] = fecha_expiracion
     
@@ -150,9 +150,10 @@ async def generar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     days = args[0] if args else "10"
     
     key_aleatoria = f"csw_{secrets.token_hex(4).upper()}"
+    # Usando el endpoint /generate?key=NEW_KEY&days=10
     exito, res = llamar_api("generate", {"key": key_aleatoria, "days": days})
     
-    if exito and isinstance(res, dict) and res.get("success"):
+    if exito:
         mensaje = f"✅ **¡Key Generada!**\n\n🔑 `{key_aleatoria}`\n⏳ **Duración:** {days} días"
     else:
         mensaje = f"❌ **Error:**\n`{res}`"
@@ -178,18 +179,13 @@ async def lote(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("⚠️ Máximo 30 keys por lote.", parse_mode="Markdown")
         return
 
-    keys_generadas = []
-    for _ in range(count):
-        key_aleatoria = f"csw_{secrets.token_hex(4).upper()}"
-        exito, res = llamar_api("generate", {"key": key_aleatoria, "days": days})
-        if exito and isinstance(res, dict) and res.get("success"):
-            keys_generadas.append(key_aleatoria)
-
-    if keys_generadas:
-        keys_texto = "\n".join([f"• `{k}`" for k in keys_generadas])
-        mensaje = f"📦 **¡Lote Generado!**\n🏷️ `{name}` | ⏳ {days} días\n\n{keys_texto}"
+    # Usando el endpoint /batch/generate?name=file1&count=5&days=10
+    exito, res = llamar_api("batch/generate", {"name": name, "count": count, "days": days})
+    
+    if exito:
+        mensaje = f"📦 **¡Lote Generado Exitosamente!**\n🏷️ **Nombre:** `{name}`\n🔢 **Cantidad:** {count}\n⏳ **Duración:** {days} días\n\nRespuesta de API: `{res}`"
     else:
-        mensaje = f"❌ **Error al generar el lote.**"
+        mensaje = f"❌ **Error al generar el lote:**\n`{res}`"
         
     await update.message.reply_text(mensaje, parse_mode="Markdown")
 
@@ -201,11 +197,11 @@ async def comprobar(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     key = args[0]
+    # Usando el endpoint /check?key=TEST_KEY
     exito, res = llamar_api("check", {"key": key})
     
-    if exito and isinstance(res, dict):
-        estado = "Activa/Válida" if res.get("success") else "Inválida/Expirada"
-        mensaje = f"🔍 **Key:** `{key}`\n📌 **Estado:** {estado}"
+    if exito:
+        mensaje = f"🔍 **Key:** `{key}`\n📌 **Respuesta API:** `{res}`"
     else:
         mensaje = f"❌ **Error:**\n`{res}`"
         
@@ -219,10 +215,11 @@ async def eliminar(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     key = args[0]
+    # Usando el endpoint /delete?key=USER_KEY
     exito, res = llamar_api("delete", {"key": key})
     
-    if exito and isinstance(res, dict) and res.get("success"):
-        mensaje = f"🗑️ **Key eliminada:**\n`{key}`"
+    if exito:
+        mensaje = f"🗑️ **Key eliminada o procesada:**\n`{key}`\nRespuesta: `{res}`"
     else:
         mensaje = f"❌ **Error:**\n`{res}`"
         
@@ -250,5 +247,5 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("comprobar", comprobar))
     app.add_handler(CommandHandler("eliminar", eliminar))
     
-    print("🤖 ¡Bot actualizado con la nueva API Key y controles seguros!")
+    print("🤖 ¡Bot conectado exitosamente con la nueva API y rutas configuradas!")
     app.run_polling()
