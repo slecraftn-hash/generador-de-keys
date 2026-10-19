@@ -8,7 +8,7 @@ from functools import wraps
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-# Tus datos de la API
+# Tus datos de la API actualizados
 API_BASE = "http://155.117.40.185:10068"
 ADMIN_API_KEY = "Paloq!gg"
 
@@ -250,5 +250,5 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("comprobar", comprobar))
     app.add_handler(CommandHandler("eliminar", eliminar))
     
-    print("🤖 ¡Bot actualizado con menú de administración separado!")
+    print("🤖 ¡Bot actualizado con la nueva API Key y controles seguros!")
     app.run_polling()
