@@ -12,8 +12,8 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 API_BASE = "http://155.117.40.185:10068"
 ADMIN_API_KEY = "Paloq!gg"
 
-# Token de tu bot
-TOKEN = "8998224860:AAHCxlM3GKXvrG7rgw_ZIpyfTR-44Of-9gk"
+# Token de tu bot actualizado
+TOKEN = "8998224860:AAGeMUEusB80s1GPS3jBbvDJjgytqg_dbdI"
 
 # Tu ID de Telegram verificado (Exclusivo para Admin)
 ADMIN_IDS = [8046948909]
